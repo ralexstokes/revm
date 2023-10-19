@@ -20,7 +20,7 @@ fn generate_kzg_settings() {
     let out_path = out_dir.join("generated.rs");
 
     let in_path = Path::new("src/kzg/trusted_setup.txt");
-    println!("cargo:rerun-if-changed={}", in_path.display());
+    // println!("cargo:rerun-if-changed={}", in_path.display());
     assert!(in_path.exists());
     let contents = format_kzg_settings(in_path, out_dir);
     fs::write(out_path, contents).unwrap();
