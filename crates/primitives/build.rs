@@ -13,16 +13,11 @@ fn main() {
 }
 
 fn generate_kzg_settings() {
-    // Note: we don't use `OUT_DIR` because we don't ship this build script with the crate, so all
-    // used files must be in tree.
-    // let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    let out_dir = Path::new("src/kzg/");
+    let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let out_path = out_dir.join("generated.rs");
 
     let in_path = Path::new("src/kzg/trusted_setup.txt");
-    // println!("cargo:rerun-if-changed={}", in_path.display());
-    assert!(in_path.exists());
-    let contents = format_kzg_settings(in_path, out_dir);
+    let contents = format_kzg_settings(in_path, &out_dir);
     fs::write(out_path, contents).unwrap();
 }
 
@@ -31,7 +26,7 @@ fn generate_kzg_settings() {
 /// - smaller runtime static size (198K = `4096*48 + 65*96` vs 404K)
 /// - don't have to do weird hacks to call `load_trusted_setup_file` at runtime, see
 ///   [Reth](https://github.com/paradigmxyz/reth/blob/b839e394a45edbe7b2030fb370420ca771e5b728/crates/primitives/src/constants/eip4844.rs#L44-L52)
-fn format_kzg_settings(in_path: &Path, out_dir: &Path) -> String {
+fn format_kzg_settings(in_path: &Path, out_dir: &PathBuf) -> String {
     let contents = fs::read_to_string(in_path).unwrap();
     let mut lines = contents.lines();
 
@@ -76,16 +71,18 @@ const _: [(); BYTES_PER_G2_POINT] = [(); {BYTES_PER_G2_POINT}];
 pub const NUM_G1_POINTS: usize = {n_g1};
 pub const NUM_G2_POINTS: usize = {n_g2};
 
-type G1Points = [[u8; BYTES_PER_G1_POINT]; NUM_G1_POINTS]; 
-type G2Points = [[u8; BYTES_PER_G2_POINT]; NUM_G2_POINTS]; 
+type G1Points = [[u8; BYTES_PER_G1_POINT]; NUM_G1_POINTS];
+type G2Points = [[u8; BYTES_PER_G2_POINT]; NUM_G2_POINTS];
 
 pub const G1_POINTS: &G1Points = {{
-    const BYTES: &[u8] = include_bytes!("./g1_points.bin");
+    // const BYTES: &[u8] = include_bytes!("./g1_points.bin");
+    const BYTES: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/g1_points.bin"));
     assert!(BYTES.len() == core::mem::size_of::<G1Points>());
     unsafe {{ &*BYTES.as_ptr().cast::<G1Points>() }}
 }};
 pub const G2_POINTS: &G2Points = {{
-    const BYTES: &[u8] = include_bytes!("./g2_points.bin");
+    // const BYTES: &[u8] = include_bytes!("./g2_points.bin");
+    const BYTES: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/g2_points.bin"));
     assert!(BYTES.len() == core::mem::size_of::<G2Points>());
     unsafe {{ &*BYTES.as_ptr().cast::<G2Points>() }}
 }};

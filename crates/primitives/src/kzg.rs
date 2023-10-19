@@ -1,6 +1,8 @@
 mod env_settings;
-#[rustfmt::skip]
-mod generated;
+
+mod generated {
+    include!(concat!(env!("OUT_DIR"), "/generated.rs"));
+}
 
 pub use c_kzg::KzgSettings;
 pub use env_settings::EnvKzgSettings;
